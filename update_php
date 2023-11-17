@@ -1,0 +1,31 @@
+#!/bin/bash
+
+# Script to update php.ini files for security
+
+# Run as root
+if [ "$(id -u)" != "0" ]; then
+   echo "This script must be run as root" 1>&2
+   exit 1
+fi
+
+# Function to update php.ini
+update_php_ini() {
+    local file=$1
+    echo "Updating $file"
+
+    # Back up the original file
+    cp "$file" "${file}.bak"
+
+    # Updating configurations
+    sed -i 's/^expose_php = .*/expose_php = Off/' "$file"
+    sed -i 's/^display_errors = .*/display_errors = Off/' "$file"
+    sed -i 's/^error_reporting = .*/error_reporting = E_ALL & ~E_DEPRECATED & ~E_STRICT/' "$file"
+    sed -i 's/^log_errors = .*/log_errors = On/' "$file"
+}
+
+export -f update_php_ini
+
+# Find all php.ini files and apply updates
+find / -name "php.ini" -exec bash -c 'update_php_ini "$0"' {} \;
+
+echo "PHP configuration update complete."
