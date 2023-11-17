@@ -1,0 +1,132 @@
+<?php
+session_start();
+
+// Number of allowed login attempts before locking the account
+$maxLoginAttempts = 3;
+
+// Lockout duration in seconds (e.g., 5 minutes)
+$lockoutDuration = 300;
+
+$users = array(
+    'username' => 'password'
+);
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $username = $_POST['username'];
+    $password = $_POST['password'];
+
+    // Check if the user is locked out
+    if (isset($_SESSION['last_failed_attempt']) && time() - $_SESSION['last_failed_attempt'] < $lockoutDuration) {
+        $remainingLockoutTime = $lockoutDuration - (time() - $_SESSION['last_failed_attempt']);
+        echo "Account locked. Please try again in $remainingLockoutTime seconds.";
+        exit();
+    }
+
+    // Check if the provided username exists in the users array
+    if (array_key_exists($username, $users) && $users[$username] === $password) {
+        // Successful login
+        $_SESSION['username'] = $username;
+        unset($_SESSION['login_attempts']);
+    } else {
+        if (!isset($_SESSION['username'])){
+        // Failed login attempt
+        if (!isset($_SESSION['login_attempts'])) {
+            $_SESSION['login_attempts'] = 1;
+        } else {
+            $_SESSION['login_attempts']++;
+        }
+
+        if ($_SESSION['login_attempts'] >= $maxLoginAttempts) {
+            $_SESSION['last_failed_attempt'] = time();
+            echo "Too many failed login attempts. Account locked.";
+        } else {
+            echo "Invalid username or password. Remaining attempts: " . ($maxLoginAttempts - $_SESSION['login_attempts']);
+        }
+    }
+}
+}
+
+// Handle form submissions here
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_SESSION['username'])) {
+    // Process your form data here
+        // Check if user is logged in
+        if (isset($_SESSION['username'])) {
+        if (isset($_POST['desktop'])) {
+	exec('wakeonlan XX:XX:XX:XX:XX:XX');
+	echo "Sent magic packet to Desktop!";
+	echo "</br>";
+        } elseif (isset($_POST['laptop'])) {
+	exec('wakeonlan XX:XX:XX:XX:XX:XX');
+	echo "Sent magic packet to Laptop!";
+	echo "</br>";
+        }
+    }
+}
+?>
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Login Page</title>
+    <style>
+        body, html {
+            height: 100%;
+	    width: 100%;
+            margin: 0;
+            padding: 0;
+        }
+
+        .form-container {
+            height: 100%;
+	    width: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        button {
+            width: 100%;
+	    height: 100%;
+            flex-grow: 1;
+            font-size: 32px; /* Default font size */
+        }
+
+        @media screen and (max-width: 768px) {
+            /* Adjust button font size for smaller screens */
+            button {
+                font-size: 24px;
+            }
+        }
+
+        @media screen and (max-width: 480px) {
+            /* Further adjust button font size for even smaller screens */
+            button {
+                font-size: 18px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="form-container">
+        <?php
+       if (isset($_SESSION['username'])) {
+        echo "<form method=\"post\">";
+        echo "<button type=\"submit\" name=\"desktop\" >Wake Desktop</button>";
+        echo "<button type=\"submit\" name=\"laptop\" >Wake Laptop</button>";
+        echo "</form>";
+        } else {
+            // Show login form
+            echo "<h2>Login</h2>";
+            echo "<form method='POST' action=''>";
+            echo "<label for='username'>Username:</label>";
+            echo "<input type='text' name='username' required><br>";
+            echo "<label for='password'>Password:</label>";
+            echo "<input type='password' name='password' required><br>";
+            echo "<input type='submit' value='Login'>";
+            echo "</form>";
+        }
+        ?>
+    </div>
+</body>
+</html>
