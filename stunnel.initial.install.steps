@@ -1,0 +1,12 @@
+apt-get install stunnel
+
+cp /usr/share/doc/stunnel4/examples/stunnel.conf-sample /etc/stunnel/dns.conf
+vim /etc/stunnel/dns.conf
+
+[dnstls]
+accept  = 853
+connect = 127.0.0.1:53
+cert = /etc/letsencrypt/live/[your location]/fullchain.pem
+key = /etc/letsencrypt/live/[your location]/privkey.pem
+
+systemctl restart stunnel4.service
