@@ -1,0 +1,41 @@
+#!/bin/bash
+
+# Script to update Apache configuration files for security
+
+# Run as root
+if [ "$(id -u)" != "0" ]; then
+   echo "This script must be run as root" 1>&2
+   exit 1
+fi
+
+# Function to update Apache config
+update_apache_config() {
+    local file=$1
+    echo "Updating $file"
+
+    # Back up the original file
+    cp "$file" "${file}.bak"
+
+    # Add or update ServerTokens and ServerSignature
+    if grep -q "ServerTokens" "$file"; then
+        sed -i 's/^ServerTokens .*/ServerTokens Prod/' "$file"
+    else
+        echo "ServerTokens Prod" >> "$file"
+    fi
+
+    if grep -q "ServerSignature" "$file"; then
+        sed -i 's/^ServerSignature .*/ServerSignature Off/' "$file"
+    else
+        echo "ServerSignature Off" >> "$file"
+    fi
+}
+
+export -f update_apache_config
+
+# Update the main Apache configuration file
+update_apache_config /etc/apache2/apache2.conf
+
+# Restart Apache to apply changes
+systemctl restart apache2
+
+echo "Apache configuration update complete."
